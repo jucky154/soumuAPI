@@ -4,7 +4,7 @@
 ![image](https://img.shields.io/badge/Go-1.16-red.svg)
 ![image](https://img.shields.io/badge/license-GPL3-darkblue.svg)
 
-This project enable zLog to access API of Ministry of Communications
+This project enables zLog to access API of Ministry of Communications
 
 ## Releases
 
