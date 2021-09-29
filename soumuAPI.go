@@ -12,7 +12,7 @@ import (
 )
 
 // datファイルを読み込み
-//go:embed acag.dat
+//go:embed allcity.dat
 var acagList string
 
 type SearchResult struct {
