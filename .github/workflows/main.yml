@@ -16,10 +16,10 @@ jobs:
         with:
           repo: "nextzlog/zylo"
           version: "tags/zbuild"
-          file: "zbuild-ubuntu"
+          file: "zbuild-linux"
           token: ${{secrets.GITHUB_TOKEN}}
-      - run: sudo chmod a+x zbuild
-      - run: zbuild compile
+      - run: sudo chmod a+x zbuild-linux
+      - run: zbuild-linux compile
       - uses: crazy-max/ghaction-upx@v1
         with:
           files: soumuAPI.dll
