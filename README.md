@@ -8,7 +8,7 @@ This project enables zLog to access API of Ministry of Communications
 
 ## Attention
 This program uses "総務省 電波利用ホームページのWeb-API 機能".
-However, this service is not supported by Ministry of Internal Affairs and Communications.
+However, this service is not guaranteed by Ministry of Internal Affairs and Communications.
 
 ## Releases
 
