@@ -1,19 +1,17 @@
-name: 'BuildDLL'
+name: 'build'
 on:
   push:
     branches:
-      - 'main'
-jobs:
+    - 'main'
+  schedule:
+  - cron: '0 0 * * *'
   BuildDLL:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: dsaltares/fetch-gh-release-asset@master
-        with:
-          repo: "nextzlog/zylo"
-          version: "tags/zbuild"
-          file: "zbuild-linux"
-          token: ${{secrets.GITHUB_TOKEN}}
+    - uses: nextzlog/zylo@master
+      with:
+        token: ${{secrets.GITHUB_TOKEN}}
+        directory: /path/to/golang/files
       - run: sudo chmod a+x zbuild-linux
       - run: ./zbuild-linux setup
       - run: ./zbuild-linux compile
