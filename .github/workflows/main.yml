@@ -11,14 +11,4 @@ on:
     - uses: nextzlog/zylo@master
       with:
         token: ${{secrets.GITHUB_TOKEN}}
-        directory: /path/to/golang/files
-      - run: sudo chmod a+x zbuild-linux
-      - run: ./zbuild-linux setup
-      - run: ./zbuild-linux compile
-      - uses: svenstaro/upload-release-action@v2
-        with:
-          tag: nightly
-          file: soumuAPI.dll
-          overwrite: true
-          file_glob: true
-          repo_token: ${{secrets.GITHUB_TOKEN}}
+        directory: /
