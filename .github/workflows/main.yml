@@ -12,4 +12,4 @@ jobs:
     - uses: nextzlog/zylo@master
       with:
         token: ${{secrets.GITHUB_TOKEN}}
-        directory: 
+        directory: .
