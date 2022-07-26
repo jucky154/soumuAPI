@@ -1,10 +1,11 @@
-name: build
+name: 'build'
 on:
   push:
     branches:
     - 'main'
   schedule:
   - cron: '0 0 * * *'
+jobs:
   BuildDLL:
     runs-on: ubuntu-latest
     steps:
