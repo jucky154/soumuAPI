@@ -1,4 +1,4 @@
-name: 'BuildDLL'
+name: build
 on:
   push:
     branches:
