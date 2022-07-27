@@ -1,18 +1,21 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
+	"github.com/gonutz/w32"
+	"github.com/sqweek/dialog"
+	"github.com/tadvi/winc"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
-	"errors"
-	_ "embed"
-	"github.com/tadvi/winc"
-	"github.com/sqweek/dialog"
 	"unsafe"
-	"github.com/gonutz/w32"
 )
+
+const winsize = "soumuAPIwindow"
 
 // datファイルを読み込み
 //go:embed allcity.dat
@@ -37,8 +40,8 @@ var stationview StationView
 type StationItem struct {
 	CallSign string
 	Location string
-	Number string
-	Power string
+	Number   string
+	Power    string
 }
 
 func (item StationItem) Text() (text []string) {
@@ -53,7 +56,7 @@ func (item StationItem) ImageIndex() int {
 	return 0
 }
 
-var numberTable  [][]string
+var numberTable [][]string
 
 // RadioSpec1からテーブルを生成
 // 形式: [型式, 周波数, 空中線電力] のリスト
@@ -74,13 +77,12 @@ func readACAG() {
 	numberTable, _ = numberReader.ReadAll()
 }
 
-
-func accessAPI() (*SearchResult, error){
+func accessAPI() (*SearchResult, error) {
 	//空データを作る
 	data := new(SearchResult)
 	//コールサインをzlogから取得
 	callSign := Query("$B")
-	if len(callSign) < 4{
+	if len(callSign) < 4 {
 		err := errors.New("callsign too short")
 		DisplayToast(err.Error())
 		return data, err
@@ -88,11 +90,11 @@ func accessAPI() (*SearchResult, error){
 
 	// APIからjsonデータを取得
 	url := "https://www.tele.soumu.go.jp/musen/list?ST=1&OF=2&DA=1&OW=AT&SK=2&DC=1&SC=1&MA=" + callSign
-	resp, err:= http.Get(url)
+	resp, err := http.Get(url)
 	defer resp.Body.Close()
 
 	//httpアクセスでエラーを吐いた時は出る
-	if  err != nil {
+	if err != nil {
 		DisplayToast(err.Error())
 		return data, err
 	}
@@ -108,7 +110,7 @@ func accessAPI() (*SearchResult, error){
 	return data, nil
 }
 
-func update(data SearchResult, frequency string){
+func update(data SearchResult, frequency string) {
 	//listを消す
 	stationview.list.DeleteAllItems()
 	// 検索にヒットした局ごとにコールサイン、JCC/JCGナンバーを出力
@@ -135,72 +137,91 @@ func update(data SearchResult, frequency string){
 		stationview.list.AddItem(StationItem{
 			CallSign: callSign,
 			Location: location,
-			Number: number,
-			Power: power,
+			Number:   number,
+			Power:    power,
 		})
 	}
 }
 
-func freqstring(index string) string{
-	switch{
-		case index == "1.9" : 
-			return "1910"
-		case index == "3.5" : 
-			return "3537.5"
-		case index == "7" : 
-			return "7100"
-		case index == "10" : 
-			return "10125"
-		case index == "14" : 
-			return "14175"
-		case index == "18" : 
-			return "18118"
-		case index == "21" : 
-			return "21225"
-		case index ==  "24": 
-			return "24940"
-		case index == "28" : 
-			return "28.85"
-		case index == "50" : 
-			return "52"
-		case index == "144" : 
-			return "145"
-		case index == "430" : 
-			return "435"
-		case index == "1200" : 
-			return "1280"
-		case index == "2400" : 
-			return "2425"
-		case index == "5600" : 
-			return "5750"
-		case index == "10G" : 
-			return "10.125"
-		default:
-			return "1910"
+func freqstring(index string) string {
+	switch {
+	case index == "1.9":
+		return "1910"
+	case index == "3.5":
+		return "3537.5"
+	case index == "7":
+		return "7100"
+	case index == "10":
+		return "10125"
+	case index == "14":
+		return "14175"
+	case index == "18":
+		return "18118"
+	case index == "21":
+		return "21225"
+	case index == "24":
+		return "24940"
+	case index == "28":
+		return "28.85"
+	case index == "50":
+		return "52"
+	case index == "144":
+		return "145"
+	case index == "430":
+		return "435"
+	case index == "1200":
+		return "1280"
+	case index == "2400":
+		return "2425"
+	case index == "5600":
+		return "5750"
+	case index == "10G":
+		return "10.125"
+	default:
+		return "1910"
 	}
 }
-	
+
 var mainWindow *winc.Form
 
-func wndOnClose(arg *winc.Event){
+func wndOnClose(arg *winc.Event) {
+	x, y := mainWindow.Pos()
+	w, h := mainWindow.Size()
+	SetINI(winsize, "x", strconv.Itoa(x))
+	SetINI(winsize, "y", strconv.Itoa(y))
+	SetINI(winsize, "w", strconv.Itoa(w))
+	SetINI(winsize, "h", strconv.Itoa(h))
 	mainWindow.Close()
 }
 
-func makewindow(){
+func makewindow() {
 	// --- Make Window
 	mainWindow = winc.NewForm(nil)
-	mainWindow.SetSize(800, 600)
+	x, _ := strconv.Atoi(GetINI(winsize, "x"))
+	y, _ := strconv.Atoi(GetINI(winsize, "y"))
+	w, _ := strconv.Atoi(GetINI(winsize, "w"))
+	h, _ := strconv.Atoi(GetINI(winsize, "h"))
+	if w <= 0 || h <= 0 {
+		w = 500
+		h = 250
+	}
+	mainWindow.SetSize(w, h)
+	if x <= 0 || y <= 0 {
+		mainWindow.Center()
+	} else {
+		mainWindow.SetPos(x, y)
+	}
 	mainWindow.SetText("soumuAPI")
 
 	btn := winc.NewPushButton(mainWindow)
 	btn.SetText("check")
-	btn.SetPos(40,50)
-	btn.SetSize(100,40)
+	btn.SetPos(40, 50)
+	btn.SetSize(100, 40)
 
-	btn.OnClick().Bind(func(e *winc.Event){
+	btn.OnClick().Bind(func(e *winc.Event) {
 		data, err := accessAPI()
 		freq := freqstring(Query("{B}"))
-		if err == nil{
+		if err == nil {
 			update(*data, freq)
 		}
 	})
@@ -224,7 +245,6 @@ func init() {
 	OnWindowEvent = onWindowEvent
 }
 
-
 func onLaunchEvent() {
 	hMenu1 := w32.HMENU(GetUI("MainForm.MainMenu"))
 	hMenu2 := w32.CreateMenu()
@@ -238,7 +258,7 @@ func onWindowEvent(ptr uintptr) {
 	msg := (*w32.MSG)(unsafe.Pointer(ptr))
 	if msg.Message == w32.WM_COMMAND {
 		switch msg.WParam {
- 		case 10001:
+		case 10001:
 			readACAG()
 			makewindow()
 		case 10002:
