@@ -1,8 +1,7 @@
  soumuAPI for zLog+
 ====
 
-![image](https://img.shields.io/badge/Go-1.16-red.svg)
-![image](https://img.shields.io/badge/license-GPL3-darkblue.svg)
+![image](https://img.shields.io/badge/Go-1.17-red.svg)
 
 This project enables zLog to access API of Ministry of Communications
 
