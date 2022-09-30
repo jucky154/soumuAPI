@@ -5,14 +5,12 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
-	"github.com/gonutz/w32"
 	"github.com/sqweek/dialog"
-	"github.com/tadvi/winc"
+	"github.com/jg1vpp/winc"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
-	"unsafe"
 )
 
 const winsize = "soumuAPIwindow"
@@ -182,6 +180,15 @@ func freqstring(index string) string {
 	}
 }
 
+func btnpush() {
+	data, err := accessAPI()
+	freq := freqstring(Query("{B}"))
+	if err == nil {
+		update(*data, freq)
+	}
+	return
+}
+
 var mainWindow *winc.Form
 
 func wndOnClose(arg *winc.Event) {
@@ -219,11 +226,7 @@ func makewindow() {
 	btn.SetSize(100, 40)
 
 	btn.OnClick().Bind(func(e *winc.Event) {
-		data, err := accessAPI()
-		freq := freqstring(Query("{B}"))
-		if err == nil {
-			update(*data, freq)
-		}
+		go btnpush()
 	})
 
 	stationview.list = winc.NewListView(mainWindow)
@@ -242,27 +245,22 @@ func makewindow() {
 
 func init() {
 	OnLaunchEvent = onLaunchEvent
-	OnWindowEvent = onWindowEvent
+	winc.DllName = "soumuAPI"
 }
 
 func onLaunchEvent() {
-	hMenu1 := w32.HMENU(GetUI("MainForm.MainMenu"))
-	hMenu2 := w32.CreateMenu()
-	w32.AppendMenu(hMenu1, w32.MF_POPUP, uintptr(hMenu2), "総務省API")
-	w32.AppendMenu(hMenu2, w32.MF_STRING, 10001, "ウィンドウを開く")
-	w32.AppendMenu(hMenu2, w32.MF_STRING, 10002, "利用規約")
-	w32.DrawMenuBar(w32.HWND(GetUI("MainForm")))
-}
+	RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginsoumuAPIWindow"))`)
+	RunDelphi(`op.Put(MainMenu.FindComponent("PluginsoumuAPIWindow"), "Caption", "総務省API ウィンドウ")`)
 
-func onWindowEvent(ptr uintptr) {
-	msg := (*w32.MSG)(unsafe.Pointer(ptr))
-	if msg.Message == w32.WM_COMMAND {
-		switch msg.WParam {
-		case 10001:
-			readACAG()
-			makewindow()
-		case 10002:
-			dialog.Message("%s", "このサービスは、総務省 電波利用ホームページのWeb-API 機能を利用して取得した情報をもとに作成していますが、サービスの内容は総務省によって保証されたものではありません").Title("利用規約").Info()
-		}
-	}
+	RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginsoumuAPIRule"))`)
+	RunDelphi(`op.Put(MainMenu.FindComponent("PluginsoumuAPIRule"), "Caption", "総務省API 利用規約")`)
+
+	HandleButton("MainForm.MainMenu.PluginsoumuAPIWindow", func(num int) {
+		readACAG()
+		makewindow()
+	})
+
+	HandleButton("MainForm.MainMenu.PluginsoumuAPIRule", func(num int) {
+		dialog.Message("%s", "このサービスは、総務省 電波利用ホームページのWeb-API 機能を利用して取得した情報をもとに作成していますが、サービスの内容は総務省によって保証されたものではありません").Title("利用規約").Info()
+	})
 }
