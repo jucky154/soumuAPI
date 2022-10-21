@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/sqweek/dialog"
-	"github.com/jg1vpp/winc"
+	"zylo/reiwa"
+	"github.com/tadvi/winc"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -79,10 +79,10 @@ func accessAPI() (*SearchResult, error) {
 	//空データを作る
 	data := new(SearchResult)
 	//コールサインをzlogから取得
-	callSign := Query("$B")
+	callSign := reiwa.Query("$B")
 	if len(callSign) < 4 {
 		err := errors.New("callsign too short")
-		DisplayToast(err.Error())
+		reiwa.DisplayToast(err.Error())
 		return data, err
 	}
 
@@ -93,7 +93,7 @@ func accessAPI() (*SearchResult, error) {
 
 	//httpアクセスでエラーを吐いた時は出る
 	if err != nil {
-		DisplayToast(err.Error())
+		reiwa.DisplayToast(err.Error())
 		return data, err
 	}
 
@@ -102,7 +102,7 @@ func accessAPI() (*SearchResult, error) {
 
 	// unmarshalに操作失敗したらエラー
 	if err := json.Unmarshal(jsonBytes, data); err != nil {
-		DisplayToast(err.Error())
+		reiwa.DisplayToast(err.Error())
 		return data, err
 	}
 	return data, nil
@@ -182,7 +182,7 @@ func freqstring(index string) string {
 
 func btnpush() {
 	data, err := accessAPI()
-	freq := freqstring(Query("{B}"))
+	freq := freqstring(reiwa.Query("{B}"))
 	if err == nil {
 		update(*data, freq)
 	}
@@ -191,34 +191,9 @@ func btnpush() {
 
 var mainWindow *winc.Form
 
-func wndOnClose(arg *winc.Event) {
-	x, y := mainWindow.Pos()
-	w, h := mainWindow.Size()
-	SetINI(winsize, "x", strconv.Itoa(x))
-	SetINI(winsize, "y", strconv.Itoa(y))
-	SetINI(winsize, "w", strconv.Itoa(w))
-	SetINI(winsize, "h", strconv.Itoa(h))
-	mainWindow.Close()
-}
-
 func makewindow() {
 	// --- Make Window
-	mainWindow = winc.NewForm(nil)
-	x, _ := strconv.Atoi(GetINI(winsize, "x"))
-	y, _ := strconv.Atoi(GetINI(winsize, "y"))
-	w, _ := strconv.Atoi(GetINI(winsize, "w"))
-	h, _ := strconv.Atoi(GetINI(winsize, "h"))
-	if w <= 0 || h <= 0 {
-		w = 500
-		h = 250
-	}
-	mainWindow.SetSize(w, h)
-	if x <= 0 || y <= 0 {
-		mainWindow.Center()
-	} else {
-		mainWindow.SetPos(x, y)
-	}
-	mainWindow.SetText("soumuAPI")
+	mainWindow = newForm(nil)
 
 	btn := winc.NewPushButton(mainWindow)
 	btn.SetText("check")
@@ -240,27 +215,26 @@ func makewindow() {
 	dock.Dock(btn, winc.Top)
 
 	mainWindow.Show()
-	mainWindow.OnClose().Bind(wndOnClose)
 }
 
 func init() {
-	OnLaunchEvent = onLaunchEvent
-	winc.DllName = "soumuAPI"
+	reiwa.OnLaunchEvent = onLaunchEvent
+	reiwa.PluginName = "soumuAPI"
 }
 
 func onLaunchEvent() {
-	RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginsoumuAPIWindow"))`)
-	RunDelphi(`op.Put(MainMenu.FindComponent("PluginsoumuAPIWindow"), "Caption", "総務省API ウィンドウ")`)
+	reiwa.RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginsoumuAPIWindow"))`)
+	reiwa.RunDelphi(`op.Put(MainMenu.FindComponent("PluginsoumuAPIWindow"), "Caption", "総務省API ウィンドウ")`)
 
-	RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginsoumuAPIRule"))`)
-	RunDelphi(`op.Put(MainMenu.FindComponent("PluginsoumuAPIRule"), "Caption", "総務省API 利用規約")`)
+	reiwa.RunDelphi(`PluginMenu.Add(op.Put(MainMenu.CreateMenuItem(), "Name", "PluginsoumuAPIRule"))`)
+	reiwa.RunDelphi(`op.Put(MainMenu.FindComponent("PluginsoumuAPIRule"), "Caption", "総務省API 利用規約")`)
 
-	HandleButton("MainForm.MainMenu.PluginsoumuAPIWindow", func(num int) {
+	reiwa.HandleButton("MainForm.MainMenu.PluginsoumuAPIWindow", func(num int) {
 		readACAG()
 		makewindow()
 	})
 
-	HandleButton("MainForm.MainMenu.PluginsoumuAPIRule", func(num int) {
+	reiwa.HandleButton("MainForm.MainMenu.PluginsoumuAPIRule", func(num int) {
 		dialog.Message("%s", "このサービスは、総務省 電波利用ホームページのWeb-API 機能を利用して取得した情報をもとに作成していますが、サービスの内容は総務省によって保証されたものではありません").Title("利用規約").Info()
 	})
 }
