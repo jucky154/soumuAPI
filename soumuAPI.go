@@ -6,16 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/sqweek/dialog"
-	"zylo/reiwa"
 	"github.com/tadvi/winc"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"zylo/reiwa"
+	"zylo/win32"
 )
 
 const winsize = "soumuAPIwindow"
 
 // datファイルを読み込み
+//
 //go:embed allcity.dat
 var acagList string
 
@@ -193,7 +195,7 @@ var mainWindow *winc.Form
 
 func makewindow() {
 	// --- Make Window
-	mainWindow = newForm(nil)
+	mainWindow = win32.NewForm(nil)
 
 	btn := winc.NewPushButton(mainWindow)
 	btn.SetText("check")
