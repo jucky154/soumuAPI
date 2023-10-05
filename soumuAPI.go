@@ -58,17 +58,6 @@ func (item StationItem) ImageIndex() int {
 
 var numberTable [][]string
 
-// RadioSpec1からテーブルを生成
-// 形式: [型式, 周波数, 空中線電力] のリスト
-func spec1StringToArray(spec string) [][]string {
-	specFormatted := strings.ReplaceAll(strings.ReplaceAll(spec, `\t`, "\t"), `\n`, "\n")
-
-	specReader := csv.NewReader(strings.NewReader(specFormatted))
-	specReader.Comma = '\t'
-	specTable, _ := specReader.ReadAll()
-	return specTable
-}
-
 // 市町村名　ナンバーのリストを整理する
 func readACAG() {
 	// 形式: [市郡町村, ナンバー] のリスト
@@ -110,7 +99,7 @@ func accessAPI() (*SearchResult, error) {
 	return data, nil
 }
 
-func update(data SearchResult, frequency string) {
+func update(data SearchResult) {
 	//listを消す
 	stationview.list.DeleteAllItems()
 	// 検索にヒットした局ごとにコールサイン、JCC/JCGナンバーを出力
@@ -128,12 +117,8 @@ func update(data SearchResult, frequency string) {
 		}
 
 		// info.RadioSpec1より周波数帯の出力
-		power := "発射不可"
-		for _, row := range spec1StringToArray(info.RadioSpec1) {
-			if strings.Contains(row[1], frequency) {
-				power = strings.ReplaceAll(row[2], " ", "")
-			}
-		}
+		power := freqstring(strings.TrimSpace(info.RadioSpec1))
+	
 		stationview.list.AddItem(StationItem{
 			CallSign: callSign,
 			Location: location,
@@ -145,48 +130,31 @@ func update(data SearchResult, frequency string) {
 
 func freqstring(index string) string {
 	switch {
-	case index == "1.9":
-		return "1910"
-	case index == "3.5":
-		return "3537.5"
-	case index == "7":
-		return "7100"
-	case index == "10":
-		return "10125"
-	case index == "14":
-		return "14175"
-	case index == "18":
-		return "18118"
-	case index == "21":
-		return "21225"
-	case index == "24":
-		return "24940"
-	case index == "28":
-		return "28.85"
-	case index == "50":
-		return "52"
-	case index == "144":
-		return "145"
-	case index == "430":
-		return "435"
-	case index == "1200":
-		return "1280"
-	case index == "2400":
-		return "2425"
-	case index == "5600":
-		return "5750"
-	case index == "10G":
-		return "10.125"
+	case index == "1AF":
+		return "1アマ固定"
+	case index == "1AM":
+		return "1アマ移動"
+	case index == "2AF":
+		return "2アマ固定"
+	case index == "2AM":
+		return "2アマ移動"
+	case index == "3AF":
+		return "3アマ固定"
+	case index == "3AM":
+		return "3アマ移動"
+	case index == "4AF":
+		return "4アマ固定"
+	case index == "4AM":
+		return "4アマ移動"
 	default:
-		return "1910"
+		return "不明"
 	}
 }
 
 func btnpush() {
 	data, err := accessAPI()
-	freq := freqstring(reiwa.Query("{B}"))
 	if err == nil {
-		update(*data, freq)
+		update(*data)
 	}
 	return
 }
@@ -209,9 +177,9 @@ func makewindow() {
 	stationview.list = winc.NewListView(mainWindow)
 	stationview.list.EnableEditLabels(false)
 	stationview.list.AddColumn("callsign", 120)
-	stationview.list.AddColumn("location", 120)
+	stationview.list.AddColumn("location", 200)
 	stationview.list.AddColumn("number", 120)
-	stationview.list.AddColumn("power", 120)
+	stationview.list.AddColumn("license", 120)
 	dock := winc.NewSimpleDock(mainWindow)
 	dock.Dock(stationview.list, winc.Fill)
 	dock.Dock(btn, winc.Top)
