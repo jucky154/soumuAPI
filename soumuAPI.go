@@ -118,7 +118,7 @@ func update(data SearchResult) {
 
 		// info.RadioSpec1より周波数帯の出力
 		power := freqstring(strings.TrimSpace(info.RadioSpec1))
-	
+
 		stationview.list.AddItem(StationItem{
 			CallSign: callSign,
 			Location: location,
