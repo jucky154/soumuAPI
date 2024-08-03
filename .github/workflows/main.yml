@@ -12,5 +12,4 @@ jobs:
     - uses: nextzlog/zylo@master
       with:
         token: ${{secrets.GITHUB_TOKEN}}
-        version: 2.8.3.0
         directory: .
